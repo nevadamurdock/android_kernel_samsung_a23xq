@@ -1,0 +1,16 @@
+# Toolchain
+toolchain
+
+# Build
+out/
+
+# AnyKernel3
+AnyKernel3*
+
+# KernelSU Next
+KernelSU-Next*
+driver/kernelsu 
+
+utsrelease.c
+getutsrel
+drivers/kernelsu
