@@ -31,7 +31,11 @@ endif
 endif
 
 ifeq ($(CONFIG_ARCH_BLAIR), y)
+ifneq ($(CONFIG_RSU_ALWAYS_INLINE),)
+include $(srctree)/techpack/camera/config/blaircamera_inline.conf
+else
 include $(srctree)/techpack/camera/config/blaircamera.conf
+endif
 endif
 
 ifeq ($(CONFIG_ARCH_SHIMA), y)
