@@ -7,8 +7,8 @@
         export KBUILD_BUILD_HOST="galaxybuild"
         export BUILD_START=`date`
         export IS_CI=true
-        export DEFCONFIG="wonderful_ksu_defconfig"
-        export DEVICE="a236xq"
+        export DEFCONFIG="wonderful_defconfig"
+        export DEVICE="a23xq"
         export DEVICE_ID="A23 5G"
         export LLVM=1
         export LLVM_IAS=1
