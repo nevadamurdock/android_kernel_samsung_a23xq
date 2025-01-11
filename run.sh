@@ -1,4 +1,5 @@
  	CLANG_VERSION=12 && echo "CLANG_VERSION=$CLANG_VERSION"
+       export CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE_O3=y
         export PATH=$(pwd)/toolchain/clang-`echo $CLANG_VERSION`/bin:$PATH
         export CROSS_COMPILE=$(pwd)/toolchain/google/bin/aarch64-linux-android-
         export CLANG_TRIPLE=aarch64-linux-gnu-

@@ -24,11 +24,12 @@ CONFIG_SECTION_MISMATCH_WARN_ONLY=y
 ARCH=arm64
 KCFLAGS=-w
 CONFIG_BUILD_ARM64_DT_OVERLAY=y
+CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE_O3=y
 "
 export ARCH=arm64
 export CLANG_TRIPLE=aarch64-linux-gnu-
 export DTC_EXT=$(pwd)/tools/dtc
-export PROJECT_NAME="a23xq"
+export PROJECT_NAME="wonderful-1.0-a236xq"
 # end of default args
 
 strip() { # fmt: strip <module>
@@ -126,7 +127,7 @@ elif [[ "$1" = "dirty" ]]; then
 	else
 		pr_invalid $2
 	fi
-	make -j`echo $ALLOC_JOB` -C $(pwd) O=$(pwd)/out `echo $DEFAULT_ARGS` -O3
+	make -j`echo $ALLOC_JOB` -C $(pwd) O=$(pwd)/out `echo $DEFAULT_ARGS` 
 elif [[ "$1" = "ak3" ]]; then
 	if [ $# -gt 1 ]; then
 		pr_err "Excess argument, only need one argument."
@@ -291,7 +292,7 @@ handle_lto() {
 # call summary
 pr_sum
 if [ "$BUILD" = "kernel" ]; then
-	make -j`echo $ALLOC_JOB` -C $(pwd) O=$(pwd)/out `echo $DEFAULT_ARGS` `echo $BUILD_DEFCONFIG` -O3
+	make -j`echo $ALLOC_JOB` -C $(pwd) O=$(pwd)/out `echo $DEFAULT_ARGS` `echo $BUILD_DEFCONFIG` 
 	[ "$KERNELSU" = "true" ] && setconfig enable KSU
 	[ "$LTO" != "none" ] && handle_lto || pr_info "LTO not set";
 	make -j`echo $ALLOC_JOB` -C $(pwd) O=$(pwd)/out `echo $DEFAULT_ARGS`
@@ -302,5 +303,5 @@ if [ "$BUILD" = "kernel" ]; then
 		pr_post_build "failed"
 	fi
 elif [ "$BUILD" = "defconfig" ]; then
-	make -j`echo $ALLOC_JOB` -C $(pwd) O=$(pwd)/out `echo $DEFAULT_ARGS` `echo $BUILD_DEFCONFIG` -O3
+	make -j`echo $ALLOC_JOB` -C $(pwd) O=$(pwd)/out `echo $DEFAULT_ARGS` `echo $BUILD_DEFCONFIG` 
 fi
