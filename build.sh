@@ -29,7 +29,7 @@ CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE_O3=y
 export ARCH=arm64
 export CLANG_TRIPLE=aarch64-linux-gnu-
 export DTC_EXT=$(pwd)/tools/dtc
-export PROJECT_NAME="wonderful-0.1-a236xq"
+export PROJECT_NAME="wonderful-0.1-a23xq"
 # end of default args
 
 strip() { # fmt: strip <module>
