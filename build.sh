@@ -9,7 +9,7 @@
 [ -z $IS_CI ] && IS_CI=false
 [ -z $DO_CLEAN ] && DO_CLEAN=false
 [ -z $LTO ] && LTO=none
-[ -z $DEFAULT_KSU_REPO ] && DEFAULT_KSU_REPO="https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh"
+[ -z $DEFAULT_KSU_REPO ] && DEFAULT_KSU_REPO="https://raw.githubusercontent.com/galaxybuild-project/KernelSU-Next-SuSFS/next/kernel/setup.sh"
 [ -z $DEVICE ] && DEVICE="Unknown"
 
 # special rissu's path. linked to his toolchains
@@ -242,7 +242,7 @@ post_build() {
 	
 	AK3="$(pwd)/AnyKernel3"
 	DATE=$(date +'%Y%m%d%H%M%S')
-	ZIP_FMT="AnyKernel3-`echo $DEVICE`_$GITSHA-$DATE"
+	ZIP_FMT="AnyKernel3-`echo $DEVICE`_$GITSHA-$DATE-SuSFS"
 	
 	clone_ak3;
 	if [ -d $AK3 ]; then
