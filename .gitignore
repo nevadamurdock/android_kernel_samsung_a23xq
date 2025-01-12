@@ -14,3 +14,9 @@ driver/kernelsu
 utsrelease.c
 getutsrel
 drivers/kernelsu
+
+# SuSFS
+*.rej
+*.orig
+*.patch
+susfs4ksu*
