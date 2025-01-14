@@ -242,7 +242,7 @@ post_build() {
 	
 	AK3="$(pwd)/AnyKernel3"
 	DATE=$(date +'%Y%m%d%H%M%S')
-	ZIP_FMT="AnyKernel3-`echo $DEVICE`_$GITSHA-$DATE-SuSFS"
+	ZIP_FMT="AnyKernel3-`echo $DEVICE`_$GITSHA-$DATE-SuSFS-Hotpatched"
 	
 	clone_ak3;
 	if [ -d $AK3 ]; then

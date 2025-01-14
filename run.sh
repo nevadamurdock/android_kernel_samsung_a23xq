@@ -3,10 +3,10 @@
         export PATH=$(pwd)/toolchain/clang-`echo $CLANG_VERSION`/bin:$PATH
         export CROSS_COMPILE=$(pwd)/toolchain/google/bin/aarch64-linux-android-
         export CLANG_TRIPLE=aarch64-linux-gnu-
-        export KBUILD_BUILD_USER="mind"
-        export KBUILD_BUILD_HOST="galaxybuild"
+        export KBUILD_BUILD_USER="Mind"
+        export KBUILD_BUILD_HOST="GalaxyBuild-Project"
         export BUILD_START=`date`
-        export IS_CI=true
+        export IS_CI=false
         export DEFCONFIG="wonderful_susfs_defconfig"
         export DEVICE="a23xq"
         export DEVICE_ID="A23 5G"
