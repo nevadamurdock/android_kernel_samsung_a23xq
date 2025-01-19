@@ -9,7 +9,8 @@
 [ -z $IS_CI ] && IS_CI=false
 [ -z $DO_CLEAN ] && DO_CLEAN=false
 [ -z $LTO ] && LTO=none
-[ -z $DEFAULT_KSU_REPO ] && DEFAULT_KSU_REPO="https://raw.githubusercontent.com/galaxybuild-project/KernelSU-Next-SuSFS/next/kernel/setup.sh"
+[ -z $DEFAULT_KSU_REPO ] && DEFAULT_KSU_REPO="https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh"
+[ -z $SUSFS_SETUP_SCRIPT ] && SUSFS_SETUP_SCRIPT="https://raw.githubusercontent.com/galaxybuild-project/tools/refs/heads/main/Scripts/KernelSU-SuSFS.sh"
 [ -z $DEVICE ] && DEVICE="Unknown"
 
 # special rissu's path. linked to his toolchains
@@ -26,10 +27,19 @@ KCFLAGS=-w
 CONFIG_BUILD_ARM64_DT_OVERLAY=y
 CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE_O3=y
 "
+
 export ARCH=arm64
 export CLANG_TRIPLE=aarch64-linux-gnu-
 export DTC_EXT=$(pwd)/tools/dtc
-export PROJECT_NAME="wonderful-0.1-a23xq"
+export PROJECT_NAME="Wonderful-${PROJECT_VERSION}-${DEVICE}"
+export CLANG_VERSION_TEXT=$(clang --version | head -n 1)
+if [ "$SUSFS4KSU" = "true" ]; then
+    export LOCALVERSION="-wondeful-${PROJECT_VERSION}-SuSFS-qgki+"
+elif [ "$KERNELSU" = "true" ]; then
+    export LOCALVERSION="-wondeful-${PROJECT_VERSION}-Next-qgki+"
+else
+    export LOCALVERSION="-wondeful-${PROJECT_VERSION}-qgki+"
+fi
 # end of default args
 
 strip() { # fmt: strip <module>
@@ -137,7 +147,12 @@ else
 	[ $# != 4 ] && usage;
 fi
 
-[ "$KERNELSU" = "true" ] && curl -LSs $DEFAULT_KSU_REPO | bash -s main || pr_info "KernelSU is disabled. Add 'KERNELSU=true' or 'export KERNELSU=true' to enable"
+
+if [ "$SUSFS4KSU" = "true" ]; then
+    curl -LSs $SUSFS_SETUP_SCRIPT | bash
+else
+    [ "$KERNELSU" = "true" ] && curl -LSs $DEFAULT_KSU_REPO | bash -s next || pr_info "KernelSU Next is disabled. Add 'KERNELSU=true' or 'export KERNELSU=true' to enable"
+fi
 
 BUILD_TARGET="$1"
 FIRST_JOB="$2"
@@ -242,7 +257,15 @@ post_build() {
 	
 	AK3="$(pwd)/AnyKernel3"
 	DATE=$(date +'%Y%m%d%H%M%S')
-	ZIP_FMT="AnyKernel3-`echo $DEVICE`_$GITSHA-$DATE-SuSFS-Hotpatched"
+	if [ "$SUSFS4KSU" = "true" ]; then
+		MOD="-SuSFS"
+	elif [ "$KERNELSU" = "true" ]; then
+		MOD="-Next"
+	else
+		MOD=""
+	fi
+	
+	ZIP_FMT="Anykernel3-${PROJECT_NAME}-${GITSHA}-${DATE}${MOD}"
 	
 	clone_ak3;
 	if [ -d $AK3 ]; then
@@ -292,16 +315,29 @@ handle_lto() {
 # call summary
 pr_sum
 if [ "$BUILD" = "kernel" ]; then
-	make -j`echo $ALLOC_JOB` -C $(pwd) O=$(pwd)/out `echo $DEFAULT_ARGS` `echo $BUILD_DEFCONFIG` 
-	[ "$KERNELSU" = "true" ] && setconfig enable KSU
-	[ "$LTO" != "none" ] && handle_lto || pr_info "LTO not set";
-	make -j`echo $ALLOC_JOB` -C $(pwd) O=$(pwd)/out `echo $DEFAULT_ARGS`
-	if [ -e $IMAGE ]; then
-		pr_post_build "completed"
-		post_build
-	else
-		pr_post_build "failed"
-	fi
+	echo "Building kernel"
+    make -j`echo $ALLOC_JOB` -C $(pwd) O=$(pwd)/out `echo $DEFAULT_ARGS` `echo $BUILD_DEFCONFIG` 
+	setconfig set-str CONFIG_CC_VERSION_TEXT $CLANG_VERSION_TEXT
+	setconfig set-str CONFIG_LOCALVERSION $LOCALVERSION
+    if [ "$SUSFS4KSU" = "true" ]; then
+	echo "SuSFS enabled"
+		setconfig enable KSU
+        setconfig enable KSU_SUSFS
+		setconfig enable KSU_SUSFS_HAS_MAGIC_MOUNT
+		setconfig enable KSU_SUSFS_SUS_OVERLAYFS
+		setconfig disable KSU_SUSFS_ENABLE_LOG
+    else
+        [ "$KERNELSU" = "true" ] && echo "KernelSU Enabled" && setconfig enable KSU
+    fi
+    [ "$LTO" != "none" ] && handle_lto || pr_info "LTO not set";
+    make -j`echo $ALLOC_JOB` -C $(pwd) O=$(pwd)/out `echo $DEFAULT_ARGS`
+    if [ -e $IMAGE ]; then
+        pr_post_build "completed"
+        post_build
+    else
+        pr_post_build "failed"
+    fi
 elif [ "$BUILD" = "defconfig" ]; then
-	make -j`echo $ALLOC_JOB` -C $(pwd) O=$(pwd)/out `echo $DEFAULT_ARGS` `echo $BUILD_DEFCONFIG` 
+	echo "Building defconfig"
+    make -j`echo $ALLOC_JOB` -C $(pwd) O=$(pwd)/out `echo $DEFAULT_ARGS` `echo $BUILD_DEFCONFIG` 
 fi
