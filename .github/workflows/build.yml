@@ -1,4 +1,4 @@
-name: Build Kernel
+name: Build wonderful kernel
 
 on:
   workflow_dispatch:
@@ -61,7 +61,7 @@ jobs:
         export KBUILD_BUILD_USER="Mind"
         export KBUILD_BUILD_HOST="GalaxyBuild-Project"
         export BUILD_START=`date`
-        export IS_CI=false
+        export IS_CI=true
         export DEFCONFIG="wonderful_defconfig"
         export DEVICE="a23xq"
         export DEVICE_ID="A23 5G"
@@ -115,42 +115,3 @@ jobs:
         name: AnyKernel3-${{ env.buildDetails }}
         path: kernel_root/AnyKernel3/*
         compression-level: 9
-
-    - name: Check need LKM stripping
-      id: need_strip
-      run: |
-        LKM=$(find $(pwd) -type f -name "*.ko")
-        if [ "$LKM" = "" ]; then
-          echo "UPLOAD=false" >> $GITHUB_OUTPUT
-        else
-          echo "UPLOAD=true" >> $GITHUB_OUTPUT
-        fi
-
-    - name: Strip LKMs
-      if: steps.need_strip.outputs.UPLOAD == 'true'
-      run: |
-        # Cleanup zip
-        rm -rf *.zip
-
-        # Create folder
-        mkdir ../kernel_object_tmp
-        mkdir kernel_object
-
-        # Only move necessary path!
-        find $(pwd) -type f -name "*.ko" -exec mv {} ../kernel_object_tmp \;
-        LIST=$(find ../kernel_object_tmp -type f -name "*.ko")
-
-        # Start stripping
-        for file in $LIST; do
-          echo -e "- Stripping `basename $file`"
-          $(pwd)/toolchains/clang-`echo $CLANG_VERSION`/bin/llvm-strip "$file" --strip-unneeded
-        done
-        mv ../kernel_object_tmp/*.ko $(pwd)/kernel_object/
-      working-directory: kernel_root
-
-    - name: Upload LKM
-      if: steps.need_strip.outputs.UPLOAD == 'true'
-      uses: actions/upload-artifact@v4
-      with:
-        name: LKM-${{ env.buildDetails }}
-        path: kernel_root/kernel_object/*
