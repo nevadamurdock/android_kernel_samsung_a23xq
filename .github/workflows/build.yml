@@ -1,0 +1,156 @@
+name: Build Kernel
+
+on:
+  workflow_dispatch:
+    inputs:
+      BRANCH:
+        description: Kernel branch
+        default: 'wonderful-fourteen'
+        required: true
+      DEFCONFIG:
+        description: Defconfig
+        default: 'wonderful_defconfig'
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        variant: ["Vanilla", "KernelSU Next", "KernelSU Next + SUSFS"] # Primitive values only
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        repository: galaxybuild-project/android_kernel_samsung_a23xq
+        path: kernel_root
+        ref: ${{ github.event.inputs.BRANCH }}
+        show-progress: false
+        fetch-depth: 1
+
+    - name: Prepare dependencies
+      run: |
+        sudo apt update -y
+        sudo apt install bc cpio flex bison aptitude git python-is-python3 tar perl wget curl lz4 -y
+        sudo aptitude install libssl-dev -y
+
+    - name: Fetch toolchains
+      run: |
+        mkdir toolchain
+        cd toolchain
+        git clone --depth=1 https://github.com/rsuntk/toolchains.git -b androidcc-4.9 google
+        mkdir clang-12.0.7
+        cd clang-12.0.7
+        wget https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/android12L-security-release/clang-r416183b1.tar.gz
+        tar -xvf *
+      working-directory: kernel_root
+
+    - name: Prepare timezone fix
+      run: |
+        sudo rm /etc/localtime
+        sudo ln -s /usr/share/zoneinfo/Asia/Bangkok /etc/localtime
+
+    - name: Build kernel - ${{ matrix.variant }}
+      id: buildKernel
+      run: |
+        CLANG_VERSION=12.0.7 && echo "CLANG_VERSION=$CLANG_VERSION" >> $GITHUB_ENV
+        export CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE_O3=y
+        export PATH=$(pwd)/toolchain/clang-`echo $CLANG_VERSION`/bin:$PATH
+        export CROSS_COMPILE=$(pwd)/toolchain/google/bin/aarch64-linux-android-
+        export CLANG_TRIPLE=aarch64-linux-gnu-
+        export KBUILD_BUILD_USER="Mind"
+        export KBUILD_BUILD_HOST="GalaxyBuild-Project"
+        export BUILD_START=`date`
+        export IS_CI=false
+        export DEFCONFIG="wonderful_defconfig"
+        export DEVICE="a23xq"
+        export DEVICE_ID="A23 5G"
+        export PROJECT_VERSION="0.35"
+        export LLVM=1
+        export LLVM_IAS=1
+        
+        # Conditional logic for environment variables
+        if [[ "${{ matrix.variant }}" == "KernelSU Next" ]]; then
+          export KERNELSU=true
+          export SUSFS4KSU=false
+          ZIP_SUFFIX="-NEXT"
+        elif [[ "${{ matrix.variant }}" == "KernelSU Next + SUSFS" ]]; then
+          export KERNELSU=true
+          export SUSFS4KSU=true
+          ZIP_SUFFIX="-SuSFS"
+        else
+          export KERNELSU=false
+          export SUSFS4KSU=false
+          ZIP_SUFFIX=""
+        fi
+
+        bash $(pwd)/build.sh kernel --jobs $(nproc --all) `echo $DEFCONFIG`
+
+        echo ""
+        echo "===================================================="
+        strings out/arch/arm64/boot/Image | grep "Linux version"
+        echo "===================================================="
+
+        mv out/.config out/build_config.txt
+        gitsha1=$(git rev-parse --short HEAD)
+        buildDetails="`make kernelversion`-`echo $DEVICE`_`echo $gitsha1`-`date +'%Y%m%d%H%M%S'`$ZIP_SUFFIX" && echo "buildDetails=$buildDetails" >> $GITHUB_ENV
+      working-directory: kernel_root
+
+    - name: Upload config
+      uses: actions/upload-artifact@v4
+      with:
+        name: Config-${{ env.buildDetails }}
+        path: kernel_root/out/build_config.txt
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: Build-${{ env.buildDetails }}
+        path: |
+          kernel_root/out/arch/arm64/boot/*.gz
+
+    - name: Upload AnyKernel3
+      uses: actions/upload-artifact@v4
+      with:
+        name: AnyKernel3-${{ env.buildDetails }}
+        path: kernel_root/AnyKernel3/*
+        compression-level: 9
+
+    - name: Check need LKM stripping
+      id: need_strip
+      run: |
+        LKM=$(find $(pwd) -type f -name "*.ko")
+        if [ "$LKM" = "" ]; then
+          echo "UPLOAD=false" >> $GITHUB_OUTPUT
+        else
+          echo "UPLOAD=true" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Strip LKMs
+      if: steps.need_strip.outputs.UPLOAD == 'true'
+      run: |
+        # Cleanup zip
+        rm -rf *.zip
+
+        # Create folder
+        mkdir ../kernel_object_tmp
+        mkdir kernel_object
+
+        # Only move necessary path!
+        find $(pwd) -type f -name "*.ko" -exec mv {} ../kernel_object_tmp \;
+        LIST=$(find ../kernel_object_tmp -type f -name "*.ko")
+
+        # Start stripping
+        for file in $LIST; do
+          echo -e "- Stripping `basename $file`"
+          $(pwd)/toolchains/clang-`echo $CLANG_VERSION`/bin/llvm-strip "$file" --strip-unneeded
+        done
+        mv ../kernel_object_tmp/*.ko $(pwd)/kernel_object/
+      working-directory: kernel_root
+
+    - name: Upload LKM
+      if: steps.need_strip.outputs.UPLOAD == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: LKM-${{ env.buildDetails }}
+        path: kernel_root/kernel_object/*
