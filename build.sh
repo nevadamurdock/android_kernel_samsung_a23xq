@@ -322,9 +322,10 @@ if [ "$BUILD" = "kernel" ]; then
     if [ "$SUSFS4KSU" = "true" ]; then
 	echo "SuSFS enabled"
 		setconfig enable KSU
-        setconfig enable KSU_SUSFS
+                setconfig enable KSU_SUSFS
 		setconfig enable KSU_SUSFS_HAS_MAGIC_MOUNT
 		setconfig enable KSU_SUSFS_SUS_OVERLAYFS
+                setconfig enable KSU_SUSFS_SUS_SU
 		setconfig disable KSU_SUSFS_ENABLE_LOG
     else
         [ "$KERNELSU" = "true" ] && echo "KernelSU Enabled" && setconfig enable KSU
