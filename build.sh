@@ -38,7 +38,7 @@ if [ "$SUSFS4KSU" = "true" ]; then
 elif [ "$KERNELSU" = "true" ]; then
     export LOCALVERSION="-wondeful-${PROJECT_VERSION}-Next-qgki+"
 else
-    export LOCALVERSION="-wondeful-${PROJECT_VERSION}-qgki+"
+    export LOCALVERSION="-wondeful-${PROJECT_VERSION}-Vanilla-gki+"
 fi
 # end of default args
 
@@ -262,7 +262,7 @@ post_build() {
 	elif [ "$KERNELSU" = "true" ]; then
 		MOD="-Next"
 	else
-		MOD=""
+		MOD="-Vanilla"
 	fi
 	
 	ZIP_FMT="Anykernel3-${PROJECT_NAME}-${GITSHA}-${DATE}${MOD}"
