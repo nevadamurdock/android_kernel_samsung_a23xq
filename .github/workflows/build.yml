@@ -58,8 +58,8 @@ jobs:
         export PATH=$(pwd)/toolchain/clang-`echo $CLANG_VERSION`/bin:$PATH
         export CROSS_COMPILE=$(pwd)/toolchain/google/bin/aarch64-linux-android-
         export CLANG_TRIPLE=aarch64-linux-gnu-
-        export KBUILD_BUILD_USER="Mind"
-        export KBUILD_BUILD_HOST="GalaxyBuild-Project"
+        export KBUILD_BUILD_USER="Runner"
+        export KBUILD_BUILD_HOST="GitHubActions"
         export BUILD_START=`date`
         export IS_CI=true
         export DEFCONFIG="wonderful_defconfig"
