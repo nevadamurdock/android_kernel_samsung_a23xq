@@ -315,7 +315,11 @@ handle_lto() {
 # call summary
 pr_sum
 if [ "$BUILD" = "kernel" ]; then
-if [ "$SUSFS4KSU" = "true" ]; then
+	echo "Building kernel"
+    make -j`echo $ALLOC_JOB` -C $(pwd) O=$(pwd)/out `echo $DEFAULT_ARGS` `echo $BUILD_DEFCONFIG` 
+	setconfig set-str CONFIG_CC_VERSION_TEXT $CLANG_VERSION_TEXT
+	setconfig set-str CONFIG_LOCALVERSION $LOCALVERSION
+    if [ "$SUSFS4KSU" = "true" ]; then
 	echo "SuSFS enabled"
                 make -j`echo $ALLOC_JOB` -C $(pwd) O=$(pwd)/out `echo $DEFAULT_ARGS` susfs
 		# setconfig enable KSU
@@ -327,10 +331,6 @@ if [ "$SUSFS4KSU" = "true" ]; then
     else
         [ "$KERNELSU" = "true" ] && echo "KernelSU Enabled" && setconfig enable KSU
     fi
-	echo "Building kernel"
-    make -j`echo $ALLOC_JOB` -C $(pwd) O=$(pwd)/out `echo $DEFAULT_ARGS` `echo $BUILD_DEFCONFIG` 
-	setconfig set-str CONFIG_CC_VERSION_TEXT $CLANG_VERSION_TEXT
-	setconfig set-str CONFIG_LOCALVERSION $LOCALVERSION
     [ "$LTO" != "none" ] && handle_lto || pr_info "LTO not set";
     make -j`echo $ALLOC_JOB` -C $(pwd) O=$(pwd)/out `echo $DEFAULT_ARGS`
     if [ -e $IMAGE ]; then
