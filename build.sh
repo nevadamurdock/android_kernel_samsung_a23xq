@@ -315,31 +315,38 @@ handle_lto() {
 # call summary
 pr_sum
 if [ "$BUILD" = "kernel" ]; then
-	echo "Building kernel"
-    make -j`echo $ALLOC_JOB` -C $(pwd) O=$(pwd)/out `echo $DEFAULT_ARGS` `echo $BUILD_DEFCONFIG` 
-	setconfig set-str CONFIG_CC_VERSION_TEXT $CLANG_VERSION_TEXT
-	setconfig set-str CONFIG_LOCALVERSION $LOCALVERSION
+    echo "Building kernel"
+
+    # Initial defconfig build
+    make -j`echo $ALLOC_JOB` -C $(pwd) O=$(pwd)/out `echo $DEFAULT_ARGS` `echo $BUILD_DEFCONFIG`
+    
+    # Apply SuSFS-specific configurations before final build
     if [ "$SUSFS4KSU" = "true" ]; then
-	echo "SuSFS enabled"
-                make -j`echo $ALLOC_JOB` -C $(pwd) O=$(pwd)/out `echo $DEFAULT_ARGS` susfs
-		# setconfig enable KSU
-                # setconfig enable KSU_SUSFS
-		# setconfig enable KSU_SUSFS_SUS_SU
-		# setconfig enable KSU_SUSFS_HAS_MAGIC_MOUNT
-		# setconfig enable KSU_SUSFS_SUS_OVERLAYFS
-		# setconfig disable KSU_SUSFS_ENABLE_LOG
+        echo "SuSFS enabled"
+        setconfig enable KSU
+        setconfig enable KSU_SUSFS
+        setconfig enable KSU_SUSFS_SUS_SU
+        setconfig enable KSU_SUSFS_HAS_MAGIC_MOUNT
+        setconfig enable KSU_SUSFS_SUS_OVERLAYFS
+        setconfig disable KSU_SUSFS_ENABLE_LOG
+        
+        # Build SuSFS target
+        make -j`echo $ALLOC_JOB` -C $(pwd) O=$(pwd)/out `echo $DEFAULT_ARGS` susfs
     else
         [ "$KERNELSU" = "true" ] && echo "KernelSU Enabled" && setconfig enable KSU
     fi
-    [ "$LTO" != "none" ] && handle_lto || pr_info "LTO not set";
+
+    # Apply LTO configuration if enabled
+    [ "$LTO" != "none" ] && handle_lto || pr_info "LTO not set"
+
+    # Final kernel build
     make -j`echo $ALLOC_JOB` -C $(pwd) O=$(pwd)/out `echo $DEFAULT_ARGS`
+
+    # Check for successful build
     if [ -e $IMAGE ]; then
         pr_post_build "completed"
         post_build
     else
         pr_post_build "failed"
     fi
-elif [ "$BUILD" = "defconfig" ]; then
-	echo "Building defconfig"
-    make -j`echo $ALLOC_JOB` -C $(pwd) O=$(pwd)/out `echo $DEFAULT_ARGS` `echo $BUILD_DEFCONFIG` 
 fi
