@@ -321,12 +321,13 @@ if [ "$BUILD" = "kernel" ]; then
 	setconfig set-str CONFIG_LOCALVERSION $LOCALVERSION
     if [ "$SUSFS4KSU" = "true" ]; then
 	echo "SuSFS enabled"
-		setconfig enable KSU
-                setconfig enable KSU_SUSFS
-		setconfig enable KSU_SUSFS_SUS_SU
-		setconfig enable KSU_SUSFS_HAS_MAGIC_MOUNT
-		setconfig enable KSU_SUSFS_SUS_OVERLAYFS
-		setconfig disable KSU_SUSFS_ENABLE_LOG
+                make -j`echo $ALLOC_JOB` -C $(pwd) O=$(pwd)/out `echo $DEFAULT_ARGS` susfs
+		# setconfig enable KSU
+                # setconfig enable KSU_SUSFS
+		# setconfig enable KSU_SUSFS_SUS_SU
+		# setconfig enable KSU_SUSFS_HAS_MAGIC_MOUNT
+		# setconfig enable KSU_SUSFS_SUS_OVERLAYFS
+		# setconfig disable KSU_SUSFS_ENABLE_LOG
     else
         [ "$KERNELSU" = "true" ] && echo "KernelSU Enabled" && setconfig enable KSU
     fi
