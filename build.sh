@@ -329,9 +329,6 @@ if [ "$BUILD" = "kernel" ]; then
         setconfig enable KSU_SUSFS_HAS_MAGIC_MOUNT
         setconfig enable KSU_SUSFS_SUS_OVERLAYFS
         setconfig disable KSU_SUSFS_ENABLE_LOG
-        
-        # Build SuSFS target
-        make -j`echo $ALLOC_JOB` -C $(pwd) O=$(pwd)/out `echo $DEFAULT_ARGS` susfs
     else
         [ "$KERNELSU" = "true" ] && echo "KernelSU Enabled" && setconfig enable KSU
     fi
