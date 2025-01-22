@@ -5,6 +5,10 @@ SUBLEVEL = 254
 EXTRAVERSION =
 NAME = Kleptomaniac Octopus
 
+# Rissu: DO NOT REMOVE THIS !!
+# Some techpack driver is rely on this !!
+export DEVICE_CODE := a23xq
+
 # indicate that change "Kbuild: Support nested composite objects" is
 # present in the kernel so that out-of-tree modules can act upon it
 export KERNEL_SUPPORTS_NESTED_COMPOSITES := y

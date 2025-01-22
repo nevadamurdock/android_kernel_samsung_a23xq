@@ -28,7 +28,6 @@ CONFIG_BUILD_ARM64_DT_OVERLAY=y
 export ARCH=arm64
 export CLANG_TRIPLE=aarch64-linux-gnu-
 export DTC_EXT=$(pwd)/tools/dtc
-export PROJECT_NAME="a23xq"
 # end of default args
 
 strip() { # fmt: strip <module>
