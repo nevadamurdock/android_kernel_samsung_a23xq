@@ -281,7 +281,7 @@ post_build() {
         mv ../kernel_obj_tmp/*.ko $(pwd)/kernel_obj/
         
         LKM_FMT="LKM-`echo $DEVICE`_$GITSHA-$DATE"
-	tar -czf `echo $FMT`.tar.gz kernel_obj/*
+	tar -czf `echo $LKM_FMT`.tar.gz kernel_obj/*
 	rm -rf kernel_obj ../kernel_obj_tmp
 }
 
