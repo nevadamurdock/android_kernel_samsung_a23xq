@@ -84,6 +84,8 @@ jobs:
           ZIP_SUFFIX="-Vanilla"
         fi
         DATE=$(date +'%Y%m%d%H%M%S')
+        GITSHA=$(git rev-parse --short HEAD)
+        PROJECT_NAME="Wonderful-${PROJECT_VERSION}-${DEVICE}"
 
         bash $(pwd)/build.sh kernel --jobs $(nproc --all) `echo $DEFCONFIG`
 
