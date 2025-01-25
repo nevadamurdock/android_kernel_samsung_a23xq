@@ -81,8 +81,9 @@ jobs:
         else
           export KERNELSU=false
           export SUSFS4KSU=false
-          ZIP_SUFFIX=""
+          ZIP_SUFFIX="-Vanilla"
         fi
+        DATE=$(date +'%Y%m%d%H%M%S')
 
         bash $(pwd)/build.sh kernel --jobs $(nproc --all) `echo $DEFCONFIG`
 
@@ -94,24 +95,18 @@ jobs:
         mv out/.config out/build_config.txt
         gitsha1=$(git rev-parse --short HEAD)
         buildDetails="`make kernelversion`-`echo $DEVICE`_`echo $gitsha1`-`date +'%Y%m%d%H%M%S'`$ZIP_SUFFIX" && echo "buildDetails=$buildDetails" >> $GITHUB_ENV
+        ZIP_FMT="${PROJECT_NAME}-${GITSHA}-${DATE}${ZIP_SUFFIX}" >> $GITHUB_ENV
       working-directory: kernel_root
 
     - name: Upload config
       uses: actions/upload-artifact@v4
       with:
-        name: Config-${{ env.buildDetails }}
+        name: Config-${{ env.ZIP_FMT }}
         path: kernel_root/out/build_config.txt
-
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: Build-${{ env.buildDetails }}
-        path: |
-          kernel_root/out/arch/arm64/boot/*.gz
 
     - name: Upload AnyKernel3
       uses: actions/upload-artifact@v4
       with:
-        name: AnyKernel3-${{ env.buildDetails }}
+        name: AnyKernel3-${{ env.ZIP_FMT }}
         path: kernel_root/AnyKernel3/*
         compression-level: 9
