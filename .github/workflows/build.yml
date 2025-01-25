@@ -95,7 +95,7 @@ jobs:
         mv out/.config out/build_config.txt
         gitsha1=$(git rev-parse --short HEAD)
         buildDetails="`make kernelversion`-`echo $DEVICE`_`echo $gitsha1`-`date +'%Y%m%d%H%M%S'`$ZIP_SUFFIX" && echo "buildDetails=$buildDetails" >> $GITHUB_ENV
-        ZIP_FMT="${PROJECT_NAME}-${GITSHA}-${DATE}${ZIP_SUFFIX}" >> $GITHUB_ENV
+        ZIP_FMT="${PROJECT_NAME}-${GITSHA}-${DATE}${ZIP_SUFFIX}" && echo "ZIP_FMT=$ZIP_FMT" >> $GITHUB_ENV
       working-directory: kernel_root
 
     - name: Upload config
