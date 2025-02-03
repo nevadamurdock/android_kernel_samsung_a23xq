@@ -204,9 +204,11 @@ static const struct freq_tbl ftbl_gpu_cc_gx_gfx3d_clk_src[] = {
 	F(700000000, P_GPU_CC_PLL0_OUT_EVEN, 2, 0, 0),
 	F(770000000, P_GPU_CC_PLL0_OUT_EVEN, 2, 0, 0),
 	F(840000000, P_GPU_CC_PLL0_OUT_EVEN, 2, 0, 0),
+	/* Overclock: Added 845, 850, 855 Mhz*/
 	F(845000000, P_GPU_CC_PLL0_OUT_EVEN, 2, 0, 0),
 	F(850000000, P_GPU_CC_PLL0_OUT_EVEN, 2, 0, 0),
 	F(855000000, P_GPU_CC_PLL0_OUT_EVEN, 2, 0, 0),
+	/*End of Overclock*/
 	F(900000000, P_GPU_CC_PLL0_OUT_EVEN, 2, 0, 0),
 	{ }
 };
