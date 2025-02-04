@@ -10,7 +10,7 @@
 [ -z $DO_CLEAN ] && DO_CLEAN=false
 [ -z $LTO ] && LTO=none
 [ -z $DEFAULT_KSU_REPO ] && DEFAULT_KSU_REPO="https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh"
-[ -z $SUSFS_SETUP_SCRIPT ] && SUSFS_SETUP_SCRIPT="https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh"
+[ -z $SUSFS_SETUP_SCRIPT ] && SUSFS_SETUP_SCRIPT="https://raw.githubusercontent.com/galaxybuild-project/tools/refs/heads/main/Scripts/KernelSU-SuSFS.sh"
 [ -z $DEVICE ] && DEVICE="Unknown"
 
 # special rissu's path. linked to his toolchains
@@ -149,7 +149,7 @@ fi
 
 
 if [ "$SUSFS4KSU" = "true" ]; then
-    curl -LSs $SUSFS_SETUP_SCRIPT | bash -s next-susfs
+    curl -LSs $SUSFS_SETUP_SCRIPT | bash -s next
 else
     [ "$KERNELSU" = "true" ] && curl -LSs $DEFAULT_KSU_REPO | bash -s next || pr_info "KernelSU Next is disabled. Add 'KERNELSU=true' or 'export KERNELSU=true' to enable"
 fi
