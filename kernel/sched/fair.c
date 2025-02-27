@@ -49,7 +49,12 @@ static unsigned int normalized_sysctl_sched_latency	= 10000000ULL;
 
 /*
  * The initial- and re-scaling of tunables is configurable
-@@ -52,20 +52,20 @@ static unsigned int normalized_sysctl_sched_latency	= 6000000ULL;
+ *
+ * Options are:
+ *
+ *   SCHED_TUNABLESCALING_NONE - unscaled, always *1
+ *   SCHED_TUNABLESCALING_LOG - scaled logarithmical, *1+ilog(ncpus)
+ *   SCHED_TUNABLESCALING_LINEAR - scaled linear, *ncpus
  *
  * (default SCHED_TUNABLESCALING_LOG = *(1+ilog(ncpus))
  */
@@ -70,7 +75,16 @@ static unsigned int sched_nr_latency = 4;
 
 /*
  * After fork, child runs first. If set to 0 (default) then
-@@ -82,8 +82,8 @@ unsigned int sysctl_sched_child_runs_first __read_mostly;
+ * parent will (try to) run first.
+ */
+unsigned int sysctl_sched_child_runs_first __read_mostly;
+
+/*
+ * SCHED_OTHER wake-up granularity.
+ *
+ * This option delays the preemption effects of decoupled workloads
+ * and reduces their over-scheduling. Synchronous workloads will still
+ * have immediate wakeup/sleep latencies.
  *
  * (default: 1 msec * (1 + ilog(ncpus)), units: nanoseconds)
  */
