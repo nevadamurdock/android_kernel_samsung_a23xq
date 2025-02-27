@@ -65,7 +65,7 @@ jobs:
         export DEFCONFIG="wonderful_defconfig"
         export DEVICE="a23xq"
         export DEVICE_ID="A23 5G"
-        export PROJECT_VERSION="0.5"
+        export PROJECT_VERSION="0.6"
         export LLVM=1
         export LLVM_IAS=1
         
