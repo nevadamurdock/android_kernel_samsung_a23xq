@@ -34,11 +34,11 @@ export DTC_EXT=$(pwd)/tools/dtc
 export PROJECT_NAME="Wonderful-${PROJECT_VERSION}-${DEVICE}"
 export CLANG_VERSION_TEXT=$(clang --version | head -n 1)
 if [ "$SUSFS4KSU" = "true" ]; then
-    export LOCALVERSION="-wondeful-${PROJECT_VERSION}-SuSFS-qgki+"
+    export LOCALVERSION="-wonderful-${PROJECT_VERSION}-SuSFS-qgki+"
 elif [ "$KERNELSU" = "true" ]; then
-    export LOCALVERSION="-wondeful-${PROJECT_VERSION}-Next-qgki+"
+    export LOCALVERSION="-wonderful-${PROJECT_VERSION}-Next-qgki+"
 else
-    export LOCALVERSION="-wondeful-${PROJECT_VERSION}-Vanilla-gki+"
+    export LOCALVERSION="-wonderful-${PROJECT_VERSION}-Vanilla-gki+"
 fi
 # end of default args
 
