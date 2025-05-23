@@ -89,7 +89,7 @@ pr_info() {
 	echo -e "[+] $@"
 }
 usage() {
-	echo -e "Usage: bash `basename $0` <build_target> <-j | --jobs> <(job_count)> <defconfig>"
+	echo -e "Usage:  `basename $0` <build_target> <-j | --jobs> <(job_count)> <defconfig>"
 	printf "\tbuild_target: dirty, kernel, config, clean\n"
 	printf "\t-j or --jobs: <int>\n"
 	
@@ -149,9 +149,9 @@ fi
 
 
 if [ "$SUSFS4KSU" = "true" ]; then
-    curl -LSs $SUSFS_SETUP_SCRIPT | bash
+    curl -LSs $SUSFS_SETUP_SCRIPT | bash -s next
 else
-    [ "$KERNELSU" = "true" ] && curl -LSs $DEFAULT_KSU_REPO | bash || pr_info "KernelSU Next is disabled. Add 'KERNELSU=true' or 'export KERNELSU=true' to enable"
+    [ "$KERNELSU" = "true" ] && curl -LSs $DEFAULT_KSU_REPO | bash -s next || pr_info "KernelSU Next is disabled. Add 'KERNELSU=true' or 'export KERNELSU=true' to enable"
 fi
 
 BUILD_TARGET="$1"
