@@ -598,6 +598,7 @@ struct dentry *devpts_pty_new(struct pts_fs_info *fsi, int index, void *priv)
 
 #ifdef CONFIG_KSU_SUSFS_SUS_SU
 extern bool ksu_devpts_hook;
+extern bool susfs_is_sus_su_hooks_enabled __read_mostly;
 extern int ksu_handle_devpts(struct inode*);
 #endif
 
@@ -610,6 +611,11 @@ extern int ksu_handle_devpts(struct inode*);
 void *devpts_get_priv(struct dentry *dentry)
 {
 #ifdef CONFIG_KSU_SUSFS_SUS_SU
+	/* Fuck it, i gonna patch in my way - blueskychan-dev after rage with 1.0.7 ksu next */
+	bool ksu_devpts_hook = false;
+	if (susfs_is_sus_su_hooks_enabled){
+		ksu_devpts_hook = true;
+	}
 	if (likely(ksu_devpts_hook)) {
 		ksu_handle_devpts(dentry->d_inode);
 	}
