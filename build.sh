@@ -149,7 +149,7 @@ fi
 
 
 if [ "$SUSFS4KSU" = "true" ]; then
-    curl -LSs $SUSFS_SETUP_SCRIPT | bash -s next
+    curl -LSs $DEFAULT_KSU_REPO | bash -s next-susfs
 else
     [ "$KERNELSU" = "true" ] && curl -LSs $DEFAULT_KSU_REPO | bash -s next || pr_info "KernelSU Next is disabled. Add 'KERNELSU=true' or 'export KERNELSU=true' to enable"
 fi
