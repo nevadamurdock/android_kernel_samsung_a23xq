@@ -141,6 +141,7 @@ struct st_sus_su {
 #ifdef CONFIG_KSU_SUSFS_SUS_PATH
 int susfs_set_i_state_on_external_dir(char __user* user_info, int cmd);
 int susfs_add_sus_path(struct st_susfs_sus_path* __user user_info);
+int susfs_sus_ino_for_filldir64(unsigned long ino);
 #endif
 /* sus_mount */
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT

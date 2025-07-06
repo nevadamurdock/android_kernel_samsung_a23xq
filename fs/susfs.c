@@ -338,6 +338,16 @@ bool susfs_is_inode_sus_path(struct inode *inode) {
 
 #endif // #ifdef CONFIG_KSU_SUSFS_SUS_PATH
 
+int susfs_sus_ino_for_filldir64(unsigned long ino) {
+	struct st_susfs_sus_path_hlist *entry;
+
+	hash_for_each_possible(SUS_PATH_HLIST, entry, node, ino) {
+		if (entry->target_ino == ino)
+			return 1;
+	}
+	return 0;
+}
+
 /* sus_mount */
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 static LIST_HEAD(LH_SUS_MOUNT);
