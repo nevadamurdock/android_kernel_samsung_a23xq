@@ -22,7 +22,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        repository: galaxybuild-project/android_kernel_samsung_a23xq
+        repository: wonderful-mobile/android_kernel_samsung_a23xq
         path: kernel_root
         ref: ${{ github.event.inputs.BRANCH }}
         show-progress: false
