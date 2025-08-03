@@ -9,6 +9,7 @@
 
 #ifdef CONFIG_KSU_SUSFS_ENABLE_LOG
 extern bool susfs_is_log_enabled __read_mostly;
+extern bool susfs_is_sus_su_ready;
 #define SUSFS_LOGI(fmt, ...) if (susfs_is_log_enabled) pr_info("susfs_sus_su:[%u][%u][%s] " fmt, current_uid().val, current->pid, __func__, ##__VA_ARGS__)
 #define SUSFS_LOGE(fmt, ...) if (susfs_is_log_enabled) pr_err("susfs_sus_su:[%u][%u][%s]" fmt, current_uid().val, current->pid, __func__, ##__VA_ARGS__)
 #else
