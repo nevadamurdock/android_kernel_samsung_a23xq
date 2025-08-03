@@ -19,6 +19,7 @@
 static spinlock_t susfs_spin_lock;
 
 extern bool susfs_is_current_ksu_domain(void);
+extern bool susfs_is_sus_su_ready;
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 extern void ksu_try_umount(const char *mnt, bool check_mnt, int flags, uid_t uid);
 #endif
@@ -873,6 +874,7 @@ int susfs_sus_su(struct st_sus_su* __user user_info) {
 		ksu_susfs_enable_sus_su();
 		susfs_sus_su_working_mode = SUS_SU_WITH_HOOKS;
 		susfs_is_sus_su_hooks_enabled = true;
+		susfs_is_sus_su_ready = true;
 		SUSFS_LOGI("core kprobe hooks for ksu are disabled!\n");
 		SUSFS_LOGI("non-kprobe hook sus_su is enabled!\n");
 		SUSFS_LOGI("sus_su mode: %d\n", SUS_SU_WITH_HOOKS);
