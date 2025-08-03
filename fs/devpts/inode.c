@@ -599,6 +599,7 @@ struct dentry *devpts_pty_new(struct pts_fs_info *fsi, int index, void *priv)
 #ifdef CONFIG_KSU_SUSFS_SUS_SU
 extern bool ksu_devpts_hook;
 extern bool susfs_is_sus_su_hooks_enabled __read_mostly;
+extern bool susfs_is_sus_su_ready;
 extern int ksu_handle_devpts(struct inode*);
 #endif
 
