@@ -19,7 +19,6 @@
 static spinlock_t susfs_spin_lock;
 
 extern bool susfs_is_current_ksu_domain(void);
-extern bool susfs_is_sus_su_ready;
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 extern void ksu_try_umount(const char *mnt, bool check_mnt, int flags, uid_t uid);
 #endif
@@ -845,6 +844,7 @@ struct filename* susfs_get_redirected_path(unsigned long ino) {
 /* sus_su */
 #ifdef CONFIG_KSU_SUSFS_SUS_SU
 extern bool susfs_is_sus_su_hooks_enabled __read_mostly;
+extern bool susfs_is_sus_su_ready;
 static int susfs_sus_su_working_mode = 0;
 extern void ksu_susfs_enable_sus_su(void);
 extern void ksu_susfs_disable_sus_su(void);
