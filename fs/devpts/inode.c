@@ -596,13 +596,6 @@ struct dentry *devpts_pty_new(struct pts_fs_info *fsi, int index, void *priv)
 	return dentry;
 }
 
-#ifdef CONFIG_KSU_SUSFS_SUS_SU
-extern bool ksu_devpts_hook;
-extern bool susfs_is_sus_su_hooks_enabled __read_mostly;
-extern bool susfs_is_sus_su_ready;
-extern int ksu_handle_devpts(struct inode*);
-#endif
-
 /**
  * devpts_get_priv -- get private data for a slave
  * @pts_inode: inode of the slave
@@ -611,17 +604,6 @@ extern int ksu_handle_devpts(struct inode*);
  */
 void *devpts_get_priv(struct dentry *dentry)
 {
-#ifdef CONFIG_KSU_SUSFS_SUS_SU
-	/* Fuck it, i gonna patch in my way - blueskychan-dev after rage with 1.0.7 ksu next */
-	bool ksu_devpts_hook = false;
-	if (susfs_is_sus_su_hooks_enabled){
-		ksu_devpts_hook = true;
-	}
-	if (likely(ksu_devpts_hook)) {
-		ksu_handle_devpts(dentry->d_inode);
-	}
-#endif
-
 	if (dentry->d_sb->s_magic != DEVPTS_SUPER_MAGIC)
 		return NULL;
 	return dentry->d_fsdata;
