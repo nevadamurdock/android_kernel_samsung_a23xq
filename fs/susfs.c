@@ -16,6 +16,7 @@
 #include <linux/random.h>
 #include <linux/susfs.h>
 #include "mount.h"
+// #include "../include/linux/susfs.h"
 
 extern bool susfs_is_current_ksu_domain(void);
 
@@ -391,6 +392,8 @@ out_copy_to_user:
 	}
 	SUSFS_LOGI("CMD_SUSFS_HIDE_SUS_MNTS_FOR_NON_SU_PROCS -> ret: %d\n", info.err);
 }
+
+void susfs_set_hide_sus_mnts_for_all_procs(void __user **user_info) {susfs_set_hide_sus_mnts_for_non_su_procs(user_info);}
 #endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 
 /* sus_kstat */
@@ -422,6 +425,11 @@ static int susfs_update_sus_kstat_inode(char *target_pathname) {
 	}
 	path_put(&p);
 	return 0;
+}
+
+void susfs_try_umount(uid_t target_uid) {
+	struct st_susfs_try_umount_list *cursor = NULL;
+	// Say no for leagcy call
 }
 
 void susfs_add_sus_kstat(void __user **user_info) {
@@ -494,6 +502,14 @@ out_copy_to_user:
 		SUSFS_LOGI("CMD_SUSFS_ADD_SUS_KSTAT_STATICALLY -> ret: %d\n", info.err);
 	}
 }
+
+#ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
+int susfs_add_try_umount(void __user **user_info)
+{
+    susfs_add_sus_kstat(user_info);   // if susfs_add_sus_kstat returns void
+    return 0;                         // or return an error code you compute
+}
+#endif
 
 void susfs_update_sus_kstat(void __user **user_info) {
 	struct st_susfs_sus_kstat info = {0};

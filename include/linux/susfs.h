@@ -176,6 +176,7 @@ void susfs_add_sus_path_loop(void __user **user_info);
 /* sus_mount */
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 void susfs_set_hide_sus_mnts_for_non_su_procs(void __user **user_info);
+// void susfs_set_hide_sus_mnts_for_all_procs(void __user **user_info); // leagcy support
 #endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 
 /* sus_kstat */
@@ -207,6 +208,12 @@ struct filename* susfs_get_redirected_path(unsigned long ino);
 /* sus_map */
 #ifdef CONFIG_KSU_SUSFS_SUS_MAP
 void susfs_add_sus_map(void __user **user_info);
+#endif
+
+#ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
+int susfs_add_try_umount(void __user **user_info);
+
+void susfs_try_umount(uid_t target_uid);
 #endif
 
 void susfs_set_avc_log_spoofing(void __user **user_info);

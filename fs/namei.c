@@ -140,6 +140,7 @@ extern const struct qstr susfs_fake_qstr_name;
 
 #define EMBEDDED_NAME_MAX	(PATH_MAX - offsetof(struct filename, iname))
 
+
 struct filename *
 getname_flags(const char __user *filename, int flags, int *empty)
 {

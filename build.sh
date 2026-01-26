@@ -151,7 +151,7 @@ fi
 if [ "$SUSFS4KSU" = "true" ]; then
 	curl -LSs $DEFAULT_KSU_REPO | bash -s legacy
 	rm -rf KernelSU-Next
-    git clone $SUSFS_KSU_REPO -b legacy-susfs KernelSU-Next
+    git clone $SUSFS_KSU_REPO -b legacy KernelSU-Next
 else
     [ "$KERNELSU" = "true" ] && curl -LSs $DEFAULT_KSU_REPO | bash -s legacy || pr_info "KernelSU Next is disabled. Add 'KERNELSU=true' or 'export KERNELSU=true' to enable"
 fi
@@ -353,6 +353,7 @@ if [ "$BUILD" = "kernel" ]; then
 		setconfig enable KSU_SUSFS_OPEN_REDIRECT
 		setconfig enable KSU_SUSFS_SUS_MAP
 		setconfig enable THREAD_INFO_IN_TASK
+		setconfig enable KSU_TAMPER_SYSCALL_TABLE
     else
         [ "$KERNELSU" = "true" ] && echo "KernelSU Enabled" && setconfig enable KSU
     fi
