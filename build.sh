@@ -10,7 +10,7 @@
 [ -z $DO_CLEAN ] && DO_CLEAN=false
 [ -z $LTO ] && LTO=none
 [ -z $DEFAULT_KSU_REPO ] && DEFAULT_KSU_REPO="https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh"
-[ -z $SUSFS_SETUP_SCRIPT ] && SUSFS_SETUP_SCRIPT="https://raw.githubusercontent.com/sidex15/KernelSU-Next/legacy-susfs/kernel/setup.sh"
+[ -z $SUSFS_KSU_REPO ] && SUSFS_KSU_REPO="https://github.com/sidex15/KernelSU-Next"
 [ -z $DEVICE ] && DEVICE="Unknown"
 
 # special rissu's path. linked to his toolchains
@@ -149,7 +149,9 @@ fi
 
 
 if [ "$SUSFS4KSU" = "true" ]; then
-    curl -LSs $SUSFS_SETUP_SCRIPT | bash
+	curl -LSs $DEFAULT_KSU_REPO | bash -s legacy
+	rm -rf KernelSU-Next
+    git clone $SUSFS_KSU_REPO -b legacy-susfs KernelSU-Next
 else
     [ "$KERNELSU" = "true" ] && curl -LSs $DEFAULT_KSU_REPO | bash -s legacy || pr_info "KernelSU Next is disabled. Add 'KERNELSU=true' or 'export KERNELSU=true' to enable"
 fi
