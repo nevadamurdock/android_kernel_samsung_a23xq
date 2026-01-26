@@ -10,7 +10,7 @@
 [ -z $DO_CLEAN ] && DO_CLEAN=false
 [ -z $LTO ] && LTO=none
 [ -z $DEFAULT_KSU_REPO ] && DEFAULT_KSU_REPO="https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh"
-[ -z $SUSFS_SETUP_SCRIPT ] && SUSFS_SETUP_SCRIPT="https://raw.githubusercontent.com/wonderful-mobile/tools/refs/heads/main/Scripts/KernelSU-SuSFS.sh"
+[ -z $SUSFS_SETUP_SCRIPT ] && SUSFS_SETUP_SCRIPT="https://raw.githubusercontent.com/sidex15/KernelSU-Next/legacy-susfs/kernel/setup.sh"
 [ -z $DEVICE ] && DEVICE="Unknown"
 
 # special rissu's path. linked to his toolchains
@@ -149,9 +149,9 @@ fi
 
 
 if [ "$SUSFS4KSU" = "true" ]; then
-    curl -LSs $SUSFS_SETUP_SCRIPT | bash -s next
+    curl -LSs $SUSFS_SETUP_SCRIPT | bash
 else
-    [ "$KERNELSU" = "true" ] && curl -LSs $DEFAULT_KSU_REPO | bash -s next || pr_info "KernelSU Next is disabled. Add 'KERNELSU=true' or 'export KERNELSU=true' to enable"
+    [ "$KERNELSU" = "true" ] && curl -LSs $DEFAULT_KSU_REPO | bash -s legacy || pr_info "KernelSU Next is disabled. Add 'KERNELSU=true' or 'export KERNELSU=true' to enable"
 fi
 
 BUILD_TARGET="$1"
@@ -340,11 +340,17 @@ if [ "$BUILD" = "kernel" ]; then
     if [ "$SUSFS4KSU" = "true" ]; then
         echo "SuSFS enabled"
         setconfig enable KSU
-        setconfig enable KSU_SUSFS
-        setconfig enable KSU_SUSFS_SUS_SU
-        setconfig enable KSU_SUSFS_HAS_MAGIC_MOUNT
-        setconfig enable KSU_SUSFS_SUS_OVERLAYFS
-        setconfig enable KSU_SUSFS_ENABLE_LOG
+		setconfig enable KSU_SUSFS
+		setconfig enable KSU_SUSFS_SUS_PATH
+		setconfig enable KSU_SUSFS_SUS_MOUNT
+		setconfig enable KSU_SUSFS_SUS_KSTAT
+		setconfig enable KSU_SUSFS_SPOOF_UNAME
+		setconfig enable KSU_SUSFS_ENABLE_LOG
+		setconfig enable KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS
+		setconfig enable KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG
+		setconfig enable KSU_SUSFS_OPEN_REDIRECT
+		setconfig enable KSU_SUSFS_SUS_MAP
+		setconfig enable THREAD_INFO_IN_TASK
     else
         [ "$KERNELSU" = "true" ] && echo "KernelSU Enabled" && setconfig enable KSU
     fi
