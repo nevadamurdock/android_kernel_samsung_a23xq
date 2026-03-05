@@ -1,12 +1,69 @@
 config SEC_A23XQ_PROJECT
+	depends on ARCH_HOLI
 	default n
 	bool "Samsung A23XQ Project"
 	help
 	  Support for Samsung A23XQ Project
 
 config MACH_A23XQ_EUR_OPEN
+	depends on SEC_A23XQ_PROJECT 
 	default n
 	bool "Samsung A23XQ EUR OPEN"
 	help
 	  Support for Samsung A23XQ EUR OPEN device.
 
+config MACH_A23XQ_SEA_OPEN
+	depends on SEC_A23XQ_PROJECT 
+	default n
+	bool "Samsung A23XQ SEA OPEN"
+	help
+	  Support for Samsung A23XQ SEA OPEN device.
+
+config MACH_A23XQ_USA_SINGLE
+	depends on SEC_A23XQ_PROJECT 
+	default n
+	bool "Samsung A23XQ USA SINGLE"
+	help
+	  Support for Samsung A23XQ USA SINGLE device.
+
+config MACH_A23XQ_USA_SINGLEW
+	depends on SEC_A23XQ_PROJECT 
+	default n
+	bool "Samsung A23XQ USA SINGLEW"
+	help
+	  Support for Samsung A23XQ USA SINGLEW device.
+
+config MACH_A23XQ_USA_OPEN
+	depends on SEC_A23XQ_PROJECT 
+	default n
+	bool "Samsung A23XQ USA OPEN"
+	help
+	  Support for Samsung A23XQ USA OPEN device.
+
+config MACH_A23XQ_USA_TFN
+	depends on SEC_A23XQ_PROJECT 
+	default n
+	bool "Samsung A23XQ USA TFN"
+	help
+	  Support for Samsung A23XQ USA TFN device.
+
+config MACH_A23XQ_CHN_HK
+	depends on SEC_A23XQ_PROJECT 
+	default n
+	bool "Samsung A23XQ CHN HK"
+	help
+	  Support for Samsung A23XQ CHN HK device.
+
+config MACH_A23XQ_LTN_OPEN
+	depends on SEC_A23XQ_PROJECT 
+	default n
+	bool "Samsung A23XQ LTN OPEN"
+	help
+	  Support for Samsung A23XQ LTN OPEN device.
+
+config MACH_A23XQ_USA_TFNSSU
+	depends on SEC_A23XQ_PROJECT 
+	default n
+	bool "Samsung A23XQ USA TFNSSU"
+	help
+	  Support for Samsung A23XQ USA TFNSSU device.
