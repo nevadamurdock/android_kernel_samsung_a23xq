@@ -12,6 +12,9 @@
 
 #include "lxs_ts_dev.h"
 
+extern const char *sb_get_ct_str(int ct);
+
+
 #if IS_ENABLED(CONFIG_INPUT_SEC_SECURE_TOUCH)
 static irqreturn_t lxs_ts_irq_thread(int irq, void *data);
 static irqreturn_t secure_filter_interrupt(struct lxs_ts_data *ts)
@@ -1057,48 +1060,7 @@ static int lxs_ts_vbus_chk_otg(struct lxs_ts_data *ts)
 		"Not-charging",
 		"Full"
 	};
-	char *sec_cable_type[] = {
-		"UNKNOWN",		/* 0 */
-		"NONE",			/* 1 */
-		"PREPARE_TA",		/* 2 */
-		"TA",			/* 3 */
-		"USB",			/* 4 */
-		"USB_CDP",		/* 5 */
-		"9V_TA",		/* 6 */
-		"9V_ERR",		/* 7 */
-		"9V_UNKNOWN",		/* 8 */
-		"12V_TA",		/* 9 */
-		"WC",			/* 10 */
-		"HV_WC",		/* 11 */
-		"PMA_WC",		/* 12 */
-		"WC_PACK",		/* 13 */
-		"WC_HV_PACK",		/* 14 */
-		"WC_STAND",		/* 15 */
-		"WC_HV_STAND",		/* 16 */
-		"OC20",			/* 17 */
-		"QC30",			/* 18 */
-		"PDIC",			/* 19 */
-		"UARTOFF",		/* 20 */
-		"OTG",			/* 21 */
-		"LAN_HUB",		/* 22 */
-		"POWER_SHARGING",	/* 23 */
-		"HMT_CONNECTED",	/* 24 */
-		"HMT_CHARGE",		/* 25 */
-		"HV_TA_CHG_LIMIT",	/* 26 */
-		"WC_VEHICLE",		/* 27 */
-		"WC_HV_VEHICLE",	/* 28 */
-		"WC_HV_PREPARE",	/* 29 */
-		"TIMEOUT",		/* 30 */
-		"SMART_OTG",		/* 31 */
-		"SMART_NOTG",		/* 32 */
-		"WC_TX",		/* 33 */
-		"HV_WC_20",		/* 34 */
-		"HV_WC_20_LIMIT",	/* 35 */
-		"WC_FAKE",		/* 36 */
-		"HV_WC_20_PREPARE",	/* 37 */
-		"PDIC_APDO",		/* 38 */
-		"POGO",			/* 39 */
-	};
+	
 	int status_batt, capa_batt;
 	int online_batt, online_usb, online_otg;
 
@@ -1121,7 +1083,7 @@ static int lxs_ts_vbus_chk_otg(struct lxs_ts_data *ts)
 		"%s: battery %s(%d) %s(%d) %d%%, usb %sconnected, otg %sconnected\n",
 		__func__,
 		sec_bat_status_str[status_batt], status_batt,
-		sec_cable_type[online_batt], online_batt,
+		sb_get_ct_str(online_batt), online_batt,
 		capa_batt,
 		online_usb ? "" : "dis",
 		online_otg ? "" : "dis");
