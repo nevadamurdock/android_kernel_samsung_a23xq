@@ -246,15 +246,21 @@ jobs:
           fi
           echo "[+] KSU + SUSFS config appended."
 
-      - name: Patch SUSFS v2.2.0 (official core)
+      - name: Patch SUSFS v2.2.0 (core) + revert file hook yang bentrok
         run: |
           curl -sSL -o susfs_patch_to_5.4.patch "${{ env.PATCHES_BASE }}/Patches/Patch/susfs_patch_to_5.4.patch"
-          patch -p1 --no-backup-if-mismatch < susfs_patch_to_5.4.patch
+          patch -p1 --no-backup-if-mismatch < susfs_patch_to_5.4.patch || true
           find . -name "*.orig" -delete
+          # File dengan .rej = hook generic gosong di source Samsung.
+          # Revert ke vanilla supaya tidak setengah-patch, hooks nanti ditulis inline_hook.
           if find . -name "*.rej" | grep -q .; then
-            echo "[-] Ada .rej saat patch SUSFS. Perlu perbaikan manual:"
-            find . -name "*.rej" | head -40
-            exit 1
+            echo "[-] Patch SUSFS ada .rej, revert file tsb ke vanilla:"
+            for r in $(find . -name "*.rej"); do
+              f="${r%.rej}"
+              echo "   revert -> $f"
+              git checkout -- "$f" || rm -f "$f"
+              rm -f "$r"
+            done
           fi
           if [ -f fs/susfs.c ]; then
             echo "[+] SUSFS core v2.2.0 OK"
@@ -298,16 +304,24 @@ jobs:
       - name: Simpan error log otomatis (kalau gagal)
         if: failure()
         run: |
-          echo "[*] Build gagal. Meringkas error dari error.log..."
+          echo "[*] Build gagal. Menangkap semua error..."
+          rm -f error_summary.txt
+          # Ekstrak baris error beserta konteks dari error.log
           if [ -f error.log ]; then
-            grep -nE "error:|Error [0-9]|make\[[0-9]+\]: \*\*\*|fatal error|undefined reference|implicit declaration" error.log | tail -80 > error_summary.txt || true
-            echo "== ringkasan error terakhir =="
-            cat error_summary.txt
+            grep -nE "error:|Error [0-9]+|make\[[0-9]+\]: \*\*\*|fatal error|undefined reference|implicit declaration|warning: " error.log > error_summary.txt || true
+            echo "== total baris error terdeteksi =="
+            wc -l error_summary.txt
+            echo "== 120 baris error teratas =="
+            head -120 error_summary.txt
           else
             echo "[-] error.log tidak ditemukan."
           fi
+          # Tangkap file .rej sisa (patch bentrok)
+          echo "=== file .rej sisa ==="
+          find . -name "*.rej" | tee error_rej_list.txt || true
           echo "=== status file penting ==="
-          ls -la image 2>/dev/null; ls -la out/arch/${{ env.KERNEL_ARCH }}/boot/ 2>/dev/null || true
+          ls -la out/arch/${{ env.KERNEL_ARCH }}/boot/ 2>/dev/null || true
+          find out/ -name "*.o" -newer out/arch/${{ env.KERNEL_ARCH }}/boot/Image 2>/dev/null | head -5 || true
 
       - name: Upload error log
         if: failure()
@@ -317,6 +331,8 @@ jobs:
           path: |
             error.log
             error_summary.txt
+            error_rej_list.txt
+            **/*.rej
             out/arch/${{ env.KERNEL_ARCH }}/boot/
           if-no-files-found: warn
 
