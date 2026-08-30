@@ -246,19 +246,60 @@ jobs:
           fi
           echo "[+] KSU + SUSFS config appended."
 
-      - name: Patch SUSFS v2.2.0 (core) + revert file hook yang bentrok
+      - name: Patch SUSFS v2.2.0 (core) + vanilla-kan file hook yang bentrok
         run: |
           curl -sSL -o susfs_patch_to_5.4.patch "${{ env.PATCHES_BASE }}/Patches/Patch/susfs_patch_to_5.4.patch"
           patch -p1 --no-backup-if-mismatch < susfs_patch_to_5.4.patch || true
           find . -name "*.orig" -delete
           # File dengan .rej = hook generic gosong di source Samsung.
-          # Revert ke vanilla supaya tidak setengah-patch, hooks nanti ditulis inline_hook.
+          # Vanilla-kan ulang (hapus blok CONFIG_KSU*) supaya tidak setengah-patch;
+          # hooks yang perlu nanti ditulis oleh susfs_inline_hook_patches.sh.
           if find . -name "*.rej" | grep -q .; then
-            echo "[-] Patch SUSFS ada .rej, revert file tsb ke vanilla:"
+            echo "[-] Patch SUSFS ada .rej, vanilla-kan file tsb:"
             for r in $(find . -name "*.rej"); do
               f="${r%.rej}"
-              echo "   revert -> $f"
-              git checkout -- "$f" || rm -f "$f"
+              echo "   -> $f"
+              python3 - "$f" <<'PYEOF'
+          import sys, re
+          path = sys.argv[1]
+          lines = open(path, encoding="utf-8", errors="ignore").read().split("\n")
+          n = len(lines)
+          def find_block(start):
+              d = 0; j = start; else_idx = None
+              while j < n:
+                  t = lines[j]
+                  if re.match(r'^\s*#\s*(if|ifdef|ifndef)\b', t): d += 1
+                  elif re.match(r'^\s*#\s*(else|elif)\b', t) and d == 1 and else_idx is None: else_idx = j
+                  elif re.match(r'^\s*#\s*endif\b', t):
+                      d -= 1
+                      if d == 0: return j, else_idx
+                  j += 1
+              return n - 1, else_idx
+          def proc(rng):
+              out = []; i = rng[0]
+              while i < rng[1]:
+                  line = lines[i]
+                  m = re.match(r'^\s*#\s*(ifdef|ifndef|if)\b', line)
+                  if not m:
+                      out.append(line); i += 1; continue
+                  ei, e2 = find_block(i); nxt = ei + 1
+                  if "CONFIG_KSU" in line:
+                      kw = m.group(1)
+                      if e2 is not None:
+                          if kw == "ifndef": out += proc([i+1, e2])
+                          else: out += proc([e2+1, ei])
+                      else:
+                          if kw == "ifndef": out += proc([i+1, ei])
+                  else:
+                      out.append(line)
+                      if e2 is None: out += proc([i+1, ei])
+                      else:
+                          out += proc([i+1, e2]); out.append(lines[e2]); out += proc([e2+1, ei])
+                      out.append(lines[ei])
+                  i = nxt
+              return out
+          open(path, "w", encoding="utf-8", newline="\n").write("\n".join(proc([0, n])))
+          PYEOF
               rm -f "$r"
             done
           fi
