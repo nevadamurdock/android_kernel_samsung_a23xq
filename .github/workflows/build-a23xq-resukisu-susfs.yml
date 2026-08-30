@@ -112,13 +112,112 @@ jobs:
           git checkout ${{ env.AK3_COMMIT }}
           echo "[+] Anykernel3 ready."
 
-      - name: Clean prebuilt KernelSU + SUSFS hooks from source
+      - name: Total hapus KernelSU + SUSFS bawaan dari source
         run: |
-          curl -sSL -o clean_hook.sh "${{ env.PATCHES_BASE }}/Bin/clean_hook.sh"
-          bash clean_hook.sh
-          echo "[+] Cleaned prebuilt KernelSU/SUSFS hooks."
+          python3 - <<'PYEOF'
+          import os, re, shutil
 
-      - name: Install KernelSU (ResukiSU)
+          KSU_DIRS = ["drivers/kernelsu", "KernelSU", "KernelSU-Next"]
+          for d in KSU_DIRS:
+              shutil.rmtree(d, ignore_errors=True)
+
+          HARD_REMOVE = [
+              "fs/susfs.c", "fs/sus_su.c",
+              "include/linux/susfs.h", "include/linux/susfs_def.h",
+          ]
+
+          CLEAN_FILES = [
+              "fs/exec.c", "fs/read_write.c", "fs/open.c", "fs/stat.c",
+              "fs/devpts/inode.c", "fs/namei.c", "fs/dcache.c", "fs/statfs.c",
+              "fs/namespace.c", "fs/proc_namespace.c", "fs/readdir.c",
+              "fs/proc/task_mmu.c", "fs/proc/base.c", "fs/proc/fd.c",
+              "fs/proc/cmdline.c", "fs/overlayfs/super.c", "fs/overlayfs/overlayfs.h",
+              "fs/overlayfs/inode.c", "fs/notify/fdinfo.c",
+              "drivers/input/input.c", "drivers/tty/pty.c",
+              "security/selinux/avc.c", "security/selinux/hooks.c",
+              "kernel/kallsyms.c", "kernel/sys.c", "kernel/reboot.c",
+              "include/linux/sched.h", "include/linux/mount.h",
+          ]
+
+          for f in HARD_REMOVE:
+              if os.path.exists(f):
+                  os.remove(f)
+                  print("removed file:", f)
+
+          def strip_blocks(path):
+              with open(path, encoding="utf-8", errors="ignore") as fh:
+                  lines = fh.read().split("\n")
+              n = len(lines)
+              def find_block(start):
+                  depth = 0
+                  j = start
+                  else_idx = None
+                  while j < n:
+                      t = lines[j]
+                      if re.match(r'^\s*#\s*(if|ifdef|ifndef)\b', t):
+                          depth += 1
+                      elif re.match(r'^\s*#\s*(else|elif)\b', t) and depth == 1 and else_idx is None:
+                          else_idx = j
+                      elif re.match(r'^\s*#\s*endif\b', t):
+                          depth -= 1
+                          if depth == 0:
+                              return j, else_idx
+                      j += 1
+                  return n - 1, else_idx
+              def proc(rng):
+                  out = []
+                  i = rng[0]
+                  while i < rng[1]:
+                      line = lines[i]
+                      m = re.match(r'^\s*#\s*(ifdef|ifndef|if)\b', line)
+                      if not m:
+                          out.append(line)
+                          i += 1
+                          continue
+                      endif_idx, else_idx = find_block(i)
+                      nxt = endif_idx + 1
+                      if "CONFIG_KSU" not in line:
+                          out.append(line)
+                          if else_idx is None:
+                              out += proc([i + 1, endif_idx])
+                          else:
+                              out += proc([i + 1, else_idx])
+                              out.append(lines[else_idx])
+                              out += proc([else_idx + 1, endif_idx])
+                          out.append(lines[endif_idx])
+                      else:
+                          kw = m.group(1)
+                          if else_idx is not None:
+                              if kw == "ifndef":
+                                  out += proc([i + 1, else_idx])
+                              else:
+                                  out += proc([else_idx + 1, endif_idx])
+                          else:
+                              if kw == "ifndef":
+                                  out += proc([i + 1, endif_idx])
+                      i = nxt
+                  return out
+              with open(path, "w", encoding="utf-8", newline="\n") as fh:
+                  fh.write("\n".join(proc([0, n])))
+
+          for f in CLEAN_FILES:
+              if os.path.exists(f):
+                  strip_blocks(f)
+                  print("cleaned:", f)
+
+          for mk in ["fs/Makefile", "drivers/Makefile", "drivers/Kconfig", "fs/Kconfig"]:
+              if os.path.exists(mk):
+                  with open(mk, encoding="utf-8", errors="ignore") as fh:
+                      c = fh.read()
+                  c2 = re.sub(r'^.*CONFIG_KSU.*$\n?', '', c, flags=re.M)
+                  if c2 != c:
+                      with open(mk, "w", encoding="utf-8", newline="\n") as fh:
+                          fh.write(c2)
+                      print("cleaned makefile:", mk)
+          PYEOF
+          echo "[+] Total KernelSU + SUSFS bawaan dihapus."
+
+      - name: Install KernelSU (ResukiSU) fresh
         run: |
           curl -sSL "https://raw.githubusercontent.com/${KERNELSU_AUTHOR}/${KERNELSU_NAME}/refs/heads/${KERNELSU_ORIGIN_BRANCH}/kernel/setup.sh" | bash -s "${{ env.KERNELSU_BRANCH }}"
 
@@ -145,11 +244,11 @@ jobs:
           fi
           echo "[+] KSU + SUSFS config appended."
 
-      - name: Patch SUSFS v2.2.0
+      - name: Patch SUSFS v2.2.0 (official)
         run: |
           curl -sSL -o susfs_patch_to_5.4.patch "${{ env.PATCHES_BASE }}/Patches/Patch/susfs_patch_to_5.4.patch"
           patch -p1 < susfs_patch_to_5.4.patch || true
-          echo "[+] SUSFS $(echo $SUSFS_VERSION) patch applied (v2.2.0)."
+          echo "[+] SUSFS official patch applied."
           find . -type f \( -name "*.rej" -o -name "*.orig" \) -delete
 
       - name: Apply SUSFS inline hook
@@ -161,7 +260,7 @@ jobs:
       - name: Extra kernel config (KALLSYMS + localversion)
         run: |
           CFG=arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}
-          sed -i 's|# CONFIG_LOCALVERSION is not set|CONFIG_LOCALVERSION="-GusKernel"|' $CFG
+          sed -i 's|# CONFIG_LOCALVERSION is not set|CONFIG_LOCALVERSION="-ResukiSU"|' $CFG
           sed -i 's|# CONFIG_LOCALVERSION_AUTO is not set|CONFIG_LOCALVERSION_AUTO=n|' $CFG
           sed -i -e '/CONFIG_DEBUG_KERNEL/d' -e '/CONFIG_KALLSYMS/d' -e '/CONFIG_KALLSYMS_ALL/d' $CFG
           cat <<'EOF' >> $CFG
