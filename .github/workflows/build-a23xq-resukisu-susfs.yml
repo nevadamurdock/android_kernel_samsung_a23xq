@@ -13,7 +13,7 @@ env:
   DEFCONFIG_NAME: "wonderful_defconfig"
 
   CUSTOM_CMDS: "CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=aarch64-linux-android-"
-  EXTRA_CMDS: "LLVM=1 LLVM_IAS=1 CC=clang LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip READELF=llvm-readelf HOSTCC=clang HOSTCXX=clang++"
+  EXTRA_CMDS: "LLVM=1 LLVM_IAS=1 CC=clang LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip READELF=llvm-readelf HOSTCC=clang HOSTCXX=clang++ KCFLAGS=-Wno-strict-prototypes"
 
   CLANG_URL: "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/android12L-security-release/clang-r416183b1.tar.gz"
   GCC_URL: "https://github.com/rsuplaygrnd/toolchains.git"
@@ -112,19 +112,39 @@ jobs:
           git checkout ${{ env.AK3_COMMIT }}
           echo "[+] Anykernel3 ready."
 
-      - name: Bersihkan hooks KernelSU lama (biarkan core SUSFS v2.2.0)
+      - name: Hapus total KernelSU + SUSFS bawaan (balik vanilla)
         run: |
           rm -rf drivers/kernelsu KernelSU KernelSU-Next
           sed -i '/kernelsu/d' drivers/Makefile
           sed -i '/drivers\/kernelsu\/Kconfig/d' drivers/Kconfig
           python3 - <<'PYEOF'
-          import os, re
+          import os, re, shutil
 
-          HOOK_FILES = [
-              "fs/exec.c", "fs/open.c", "fs/read_write.c", "fs/stat.c",
-              "fs/namei.c", "drivers/input/input.c", "security/security.c",
+          KSU_DIRS = ["drivers/kernelsu", "KernelSU", "KernelSU-Next"]
+          for d in KSU_DIRS:
+              shutil.rmtree(d, ignore_errors=True)
+
+          HARD_REMOVE = [
+              "fs/susfs.c", "fs/sus_su.c",
+              "include/linux/susfs.h", "include/linux/susfs_def.h",
+          ]
+          for f in HARD_REMOVE:
+              if os.path.exists(f):
+                  os.remove(f)
+
+          CLEAN_FILES = [
+              "fs/exec.c", "fs/read_write.c", "fs/open.c", "fs/stat.c",
+              "fs/devpts/inode.c", "fs/namei.c", "fs/dcache.c", "fs/statfs.c",
+              "fs/namespace.c", "fs/proc_namespace.c", "fs/readdir.c",
+              "fs/proc/task_mmu.c", "fs/proc/base.c", "fs/proc/fd.c",
+              "fs/proc/cmdline.c", "fs/overlayfs/super.c", "fs/overlayfs/overlayfs.h",
+              "fs/overlayfs/inode.c", "fs/notify/fdinfo.c",
+              "drivers/input/input.c", "drivers/tty/pty.c",
+              "security/security.c", "security/selinux/avc.c",
               "security/selinux/hooks.c", "security/selinux/ss/services.c",
-              "kernel/reboot.c", "kernel/sys.c", "include/linux/seccomp.h",
+              "kernel/kallsyms.c", "kernel/sys.c", "kernel/reboot.c",
+              "include/linux/sched.h", "include/linux/mount.h",
+              "include/linux/seccomp.h",
           ]
 
           def strip_blocks(path):
@@ -183,12 +203,21 @@ jobs:
               with open(path, "w", encoding="utf-8", newline="\n") as fh:
                   fh.write("\n".join(proc([0, n])))
 
-          for f in HOOK_FILES:
+          for f in CLEAN_FILES:
               if os.path.exists(f):
                   strip_blocks(f)
+
+          for mk in ["fs/Makefile", "drivers/Makefile", "drivers/Kconfig", "fs/Kconfig"]:
+              if os.path.exists(mk):
+                  with open(mk, encoding="utf-8", errors="ignore") as fh:
+                      c = fh.read()
+                  c2 = re.sub(r'^.*CONFIG_KSU.*$\n?', '', c, flags=re.M)
+                  if c2 != c:
+                      with open(mk, "w", encoding="utf-8", newline="\n") as fh:
+                          fh.write(c2)
           PYEOF
           sed -i '/CONFIG_KSU/d' arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}
-          echo "[+] Hook KernelSU lama dibersihkan, core SUSFS dipertahankan."
+          echo "[+] SUSFS + KernelSU bawaan (v2.0.0) dibuang, source vanilla."
 
       - name: Install KernelSU (ResukiSU) fresh
         run: |
@@ -217,6 +246,23 @@ jobs:
           fi
           echo "[+] KSU + SUSFS config appended."
 
+      - name: Patch SUSFS v2.2.0 (official core)
+        run: |
+          curl -sSL -o susfs_patch_to_5.4.patch "${{ env.PATCHES_BASE }}/Patches/Patch/susfs_patch_to_5.4.patch"
+          patch -p1 --no-backup-if-mismatch < susfs_patch_to_5.4.patch
+          find . -name "*.orig" -delete
+          if find . -name "*.rej" | grep -q .; then
+            echo "[-] Ada .rej saat patch SUSFS. Perlu perbaikan manual:"
+            find . -name "*.rej" | head -40
+            exit 1
+          fi
+          if [ -f fs/susfs.c ]; then
+            echo "[+] SUSFS core v2.2.0 OK"
+          else
+            echo "[-] SUSFS core tidak terbentuk setelah patch."
+            exit 1
+          fi
+
       - name: Apply SUSFS inline hook (ReSukiSU format)
         run: |
           curl -sSL -o susfs_inline_hook_patches.sh "${{ env.PATCHES_BASE }}/Patches/susfs_inline_hook_patches.sh"
@@ -244,9 +290,35 @@ jobs:
 
       - name: Build kernel
         run: |
+          set -o pipefail
           export PATH=$GITHUB_WORKSPACE/clang-custom/bin:$GITHUB_WORKSPACE/google/bin:$PATH
           make O=out ARCH=${{ env.KERNEL_ARCH }} ${{ env.CUSTOM_CMDS }} ${{ env.EXTRA_CMDS }} ${{ env.DEFCONFIG_NAME }}
           make -j$(nproc --all) CC="ccache clang" ${{ env.CUSTOM_CMDS }} ${{ env.EXTRA_CMDS }} O=out ARCH=${{ env.KERNEL_ARCH }} 2>&1 | tee error.log
+
+      - name: Simpan error log otomatis (kalau gagal)
+        if: failure()
+        run: |
+          echo "[*] Build gagal. Meringkas error dari error.log..."
+          if [ -f error.log ]; then
+            grep -nE "error:|Error [0-9]|make\[[0-9]+\]: \*\*\*|fatal error|undefined reference|implicit declaration" error.log | tail -80 > error_summary.txt || true
+            echo "== ringkasan error terakhir =="
+            cat error_summary.txt
+          else
+            echo "[-] error.log tidak ditemukan."
+          fi
+          echo "=== status file penting ==="
+          ls -la image 2>/dev/null; ls -la out/arch/${{ env.KERNEL_ARCH }}/boot/ 2>/dev/null || true
+
+      - name: Upload error log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-error-log
+          path: |
+            error.log
+            error_summary.txt
+            out/arch/${{ env.KERNEL_ARCH }}/boot/
+          if-no-files-found: warn
 
       - name: Verify build output
         run: |
