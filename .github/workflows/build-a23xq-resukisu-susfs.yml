@@ -112,13 +112,83 @@ jobs:
           git checkout ${{ env.AK3_COMMIT }}
           echo "[+] Anykernel3 ready."
 
-      - name: Bersihkan KernelSU lama, pertahankan core SUSFS v2.2.0
+      - name: Bersihkan hooks KernelSU lama (biarkan core SUSFS v2.2.0)
         run: |
           rm -rf drivers/kernelsu KernelSU KernelSU-Next
           sed -i '/kernelsu/d' drivers/Makefile
           sed -i '/drivers\/kernelsu\/Kconfig/d' drivers/Kconfig
+          python3 - <<'PYEOF'
+          import os, re
+
+          HOOK_FILES = [
+              "fs/exec.c", "fs/open.c", "fs/read_write.c", "fs/stat.c",
+              "fs/namei.c", "drivers/input/input.c", "security/security.c",
+              "security/selinux/hooks.c", "security/selinux/ss/services.c",
+              "kernel/reboot.c", "kernel/sys.c", "include/linux/seccomp.h",
+          ]
+
+          def strip_blocks(path):
+              with open(path, encoding="utf-8", errors="ignore") as fh:
+                  lines = fh.read().split("\n")
+              n = len(lines)
+              def find_block(start):
+                  depth = 0
+                  j = start
+                  else_idx = None
+                  while j < n:
+                      t = lines[j]
+                      if re.match(r'^\s*#\s*(if|ifdef|ifndef)\b', t):
+                          depth += 1
+                      elif re.match(r'^\s*#\s*(else|elif)\b', t) and depth == 1 and else_idx is None:
+                          else_idx = j
+                      elif re.match(r'^\s*#\s*endif\b', t):
+                          depth -= 1
+                          if depth == 0:
+                              return j, else_idx
+                      j += 1
+                  return n - 1, else_idx
+              def proc(rng):
+                  out = []
+                  i = rng[0]
+                  while i < rng[1]:
+                      line = lines[i]
+                      m = re.match(r'^\s*#\s*(ifdef|ifndef|if)\b', line)
+                      if not m:
+                          out.append(line)
+                          i += 1
+                          continue
+                      endif_idx, else_idx = find_block(i)
+                      nxt = endif_idx + 1
+                      if "CONFIG_KSU" not in line:
+                          out.append(line)
+                          if else_idx is None:
+                              out += proc([i + 1, endif_idx])
+                          else:
+                              out += proc([i + 1, else_idx])
+                              out.append(lines[else_idx])
+                              out += proc([else_idx + 1, endif_idx])
+                          out.append(lines[endif_idx])
+                      else:
+                          kw = m.group(1)
+                          if else_idx is not None:
+                              if kw == "ifndef":
+                                  out += proc([i + 1, else_idx])
+                              else:
+                                  out += proc([else_idx + 1, endif_idx])
+                          else:
+                              if kw == "ifndef":
+                                  out += proc([i + 1, endif_idx])
+                      i = nxt
+                  return out
+              with open(path, "w", encoding="utf-8", newline="\n") as fh:
+                  fh.write("\n".join(proc([0, n])))
+
+          for f in HOOK_FILES:
+              if os.path.exists(f):
+                  strip_blocks(f)
+          PYEOF
           sed -i '/CONFIG_KSU/d' arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}
-          echo "[+] KernelSU lama dibersihkan, core SUSFS dipertahankan."
+          echo "[+] Hook KernelSU lama dibersihkan, core SUSFS dipertahankan."
 
       - name: Install KernelSU (ResukiSU) fresh
         run: |
@@ -146,6 +216,12 @@ jobs:
             echo "CONFIG_THREAD_INFO_IN_TASK=y" >> $CFG
           fi
           echo "[+] KSU + SUSFS config appended."
+
+      - name: Apply SUSFS inline hook (ReSukiSU format)
+        run: |
+          curl -sSL -o susfs_inline_hook_patches.sh "${{ env.PATCHES_BASE }}/Patches/susfs_inline_hook_patches.sh"
+          bash susfs_inline_hook_patches.sh ./
+          echo "[+] SUSFS inline hook (ReSukiSU format) applied."
 
       - name: Extra kernel config (KALLSYMS + localversion)
         run: |
